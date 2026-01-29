@@ -1,0 +1,183 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         String   @default("admin")
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+  createdAt    DateTime @default(now())
+  lastLoginAt  DateTime?
+  casesCreated Case[]   @relation("CaseCreatedBy")
+  casesAssigned Case[]  @relation("CaseAssignedTo")
+  caseNotes    CaseNote[]
+  auditLogs    AuditLog[]
+  evidenceAttachments EvidenceAttachment[]
+  exportJobs   ExportJob[]
+  caseEvidence  CaseEvidenceAttachment[]
+}
+
+model Tenant {
+  id           String        @id @default(cuid())
+  name         String
+  slug         String        @unique
+  createdAt    DateTime      @default(now())
+  users        AdminUser[]
+  detectionLogs DetectionLog[]
+  trustedDomains TrustedDomain[]
+  reports      CommunityReport[]
+  auditLogs    AuditLog[]
+  cases        Case[]
+  evidenceAttachments EvidenceAttachment[]
+  exportJobs   ExportJob[]
+  caseEvidence  CaseEvidenceAttachment[]
+}
+
+model DetectionLog {
+  id             String   @id @default(cuid())
+  tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id])
+  inputType      String
+  result         String
+  confidence     Int
+  aiScore        Int?
+  riskScore      Int?
+  riskLevel      String   @default("low")
+  indicatorsJson String
+  localIntelJson String?
+  playbookJson   String?
+  summary        String?
+  summaryAm      String?
+  contentPreview String?
+  contentHash    String?
+  createdAt      DateTime @default(now())
+  trustedDomain  Boolean  @default(false)
+  institution    String?
+  attackType     String?
+  status         String   @default("pending")
+  softDeleted    Boolean  @default(false)
+  cases          Case[]
+  evidence       EvidenceAttachment[]
+}
+
+model TrustedDomain {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  domain    String
+  createdAt DateTime @default(now())
+  createdBy String?
+
+  @@unique([tenantId, domain])
+}
+
+model CommunityReport {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  reporter    String?
+  message     String
+  url         String?
+  source      String?
+  createdAt   DateTime @default(now())
+  reviewed    Boolean  @default(false)
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  actorId     String?
+  actor       AdminUser? @relation(fields: [actorId], references: [id])
+  actorEmail  String?
+  action      String
+  targetType  String?
+  targetId    String?
+  metadataJson String?
+  prevHash    String?
+  hash        String
+  createdAt   DateTime @default(now())
+}
+
+model Case {
+  id            String   @id @default(cuid())
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id])
+  title         String
+  description   String?
+  status        String   @default("new")
+  severity      String   @default("medium")
+  detectionLogId String?
+  detectionLog  DetectionLog? @relation(fields: [detectionLogId], references: [id])
+  createdById   String
+  createdBy     AdminUser @relation("CaseCreatedBy", fields: [createdById], references: [id])
+  assignedToId  String?
+  assignedTo    AdminUser? @relation("CaseAssignedTo", fields: [assignedToId], references: [id])
+  createdAt     DateTime @default(now())
+  notes         CaseNote[]
+  evidence      CaseEvidenceAttachment[]
+}
+
+model CaseNote {
+  id        String   @id @default(cuid())
+  caseId    String
+  case      Case     @relation(fields: [caseId], references: [id])
+  authorId  String
+  author    AdminUser @relation(fields: [authorId], references: [id])
+  message   String
+  createdAt DateTime @default(now())
+}
+
+model EvidenceAttachment {
+  id            String   @id @default(cuid())
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id])
+  detectionLogId String
+  detectionLog  DetectionLog @relation(fields: [detectionLogId], references: [id])
+  filename      String
+  mimeType      String
+  sizeBytes     Int
+  storagePath   String
+  uploadedById  String
+  uploadedBy    AdminUser @relation(fields: [uploadedById], references: [id])
+  createdAt     DateTime @default(now())
+}
+
+model CaseEvidenceAttachment {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+  caseId       String
+  case         Case     @relation(fields: [caseId], references: [id])
+  filename     String
+  mimeType     String
+  sizeBytes    Int
+  storagePath  String
+  uploadedById String
+  uploadedBy   AdminUser @relation(fields: [uploadedById], references: [id])
+  createdAt    DateTime @default(now())
+}
+
+model ExportJob {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+  type         String
+  status       String   @default("queued")
+  paramsJson   String
+  resultPath   String?
+  exportHash   String?
+  errorMessage String?
+  createdById  String
+  createdBy    AdminUser @relation(fields: [createdById], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now())
+}
