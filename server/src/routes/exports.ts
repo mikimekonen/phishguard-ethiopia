@@ -1,4 +1,5 @@
 import { Router } from "express";
+import type { DetectionLog } from "@prisma/client";
 import { requireAuth, requireRole } from "../auth";
 import { prisma } from "../prisma";
 import { buildSingleScanPdf } from "../utils/pdfReport";
@@ -105,11 +106,11 @@ exportsRouter.get("/exports/scans/pdf", requireRole("analyst"), async (req, res)
   }
   const tenantId = (req as any).user.tenantId;
   const filters = buildFilters({ ...parsed.data, tenantId });
-  const logs = await prisma.detectionLog.findMany({
+  const logs = (await prisma.detectionLog.findMany({
     where: filters,
     orderBy: { createdAt: "desc" },
     take: 500,
-  });
+  })) as DetectionLog[];
 
   const doc = buildBulkReportPdf({
     logs: logs.map((log) => ({
