@@ -115,5 +115,10 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    function ({ addVariant }: { addVariant: (name: string, selector: string) => void }) {
+      addVariant("light", ".light &");
+    },
+  ],
 } satisfies Config;

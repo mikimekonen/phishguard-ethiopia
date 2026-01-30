@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
 const navItems = [
   { label: "Home", labelAm: "መነሻ", href: "/" },
@@ -52,7 +53,8 @@ export function Header() {
           </nav>
 
           {/* CTA Button */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3">
+            <ThemeToggle />
             <Link to="/detect">
               <Button variant="hero" size="sm">
                 Start Detection
@@ -89,6 +91,10 @@ export function Header() {
                   <span className="text-xs text-muted-foreground ml-2">({item.labelAm})</span>
                 </Link>
               ))}
+              <div className="flex items-center justify-between px-4 py-2">
+                <span className="text-xs text-muted-foreground">Theme</span>
+                <ThemeToggle />
+              </div>
               <Link to="/detect" onClick={() => setMobileMenuOpen(false)}>
                 <Button variant="hero" className="w-full mt-2">
                   Start Detection

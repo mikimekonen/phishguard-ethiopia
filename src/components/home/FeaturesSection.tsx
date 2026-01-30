@@ -70,7 +70,7 @@ export function FeaturesSection() {
           {features.map((feature, index) => (
             <div
               key={feature.title}
-              className="group relative p-6 rounded-2xl border border-border bg-card/50 backdrop-blur-sm hover:border-primary/50 transition-all duration-300 hover:-translate-y-1"
+              className="group relative p-6 rounded-2xl border border-border bg-card/50 backdrop-blur-sm hover:border-primary/50 transition-all duration-300 hover:-translate-y-1 light:bg-white light:border-slate-200 light:hover:border-primary/40"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               {/* Icon */}

@@ -6,9 +6,9 @@ export function HeroSection() {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
       {/* Background Effects */}
-      <div className="absolute inset-0 gradient-hero" />
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse-glow" />
-      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-accent/10 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: "1s" }} />
+      <div className="absolute inset-0 gradient-hero dark:opacity-100 light:opacity-80" />
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 light:bg-primary/5 rounded-full blur-3xl animate-pulse-glow" />
+      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-accent/10 light:bg-accent/5 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: "1s" }} />
       
       {/* Grid Pattern */}
       <div 
@@ -23,7 +23,7 @@ export function HeroSection() {
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/10 text-primary mb-8 animate-fade-in">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/10 light:bg-primary/5 light:border-primary/20 text-primary mb-8 animate-fade-in">
             <ShieldCheck className="h-4 w-4" />
             <span className="text-sm font-medium">Protecting Ethiopian Banking Users</span>
           </div>
@@ -63,7 +63,7 @@ export function HeroSection() {
 
           {/* Floating Shield */}
           <div className="relative w-32 h-32 mx-auto animate-float">
-            <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl" />
+            <div className="absolute inset-0 bg-primary/20 light:bg-primary/10 rounded-full blur-2xl" />
             <div className="relative w-full h-full flex items-center justify-center">
               <Shield className="w-20 h-20 text-primary animate-shield-pulse" />
             </div>

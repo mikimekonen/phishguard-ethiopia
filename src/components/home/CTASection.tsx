@@ -6,13 +6,13 @@ export function CTASection() {
   return (
     <section className="py-24 relative overflow-hidden">
       {/* Background */}
-      <div className="absolute inset-0 gradient-hero" />
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/20 rounded-full blur-3xl" />
+      <div className="absolute inset-0 gradient-hero dark:opacity-100 light:opacity-80" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/20 light:bg-primary/10 rounded-full blur-3xl" />
 
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-3xl mx-auto text-center">
           {/* Icon */}
-          <div className="inline-flex p-4 rounded-2xl bg-primary/10 border border-primary/30 mb-8">
+          <div className="inline-flex p-4 rounded-2xl bg-primary/10 light:bg-primary/5 border border-primary/30 light:border-primary/20 mb-8">
             <ShieldCheck className="h-12 w-12 text-primary" />
           </div>
 

@@ -11,7 +11,7 @@ const banks = [
 
 export function BanksSection() {
   return (
-    <section className="py-24 bg-muted/30 relative overflow-hidden">
+    <section className="py-24 bg-muted/30 light:bg-slate-50 relative overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div 
@@ -39,14 +39,14 @@ export function BanksSection() {
           {banks.map((bank, index) => (
             <div
               key={bank.name}
-              className="group flex flex-col items-center p-6 rounded-2xl border border-border bg-card/80 backdrop-blur-sm hover:border-primary/50 transition-all duration-300 hover:-translate-y-1"
+              className="group flex flex-col items-center p-6 rounded-2xl border border-border bg-card/80 backdrop-blur-sm hover:border-primary/50 transition-all duration-300 hover:-translate-y-1 light:bg-white light:border-slate-200 light:hover:border-primary/40"
             >
-              <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+              <div className="w-14 h-14 rounded-xl bg-primary/10 light:bg-primary/5 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
                 <bank.icon className="h-7 w-7 text-primary" />
               </div>
               <h3 className="text-sm font-semibold text-center mb-1">{bank.name}</h3>
               <p className="text-xs text-secondary text-center">{bank.nameAm}</p>
-              <span className="mt-2 text-[10px] text-muted-foreground px-2 py-0.5 rounded-full bg-muted">
+              <span className="mt-2 text-[10px] text-muted-foreground px-2 py-0.5 rounded-full bg-muted light:bg-slate-100">
                 {bank.type}
               </span>
             </div>

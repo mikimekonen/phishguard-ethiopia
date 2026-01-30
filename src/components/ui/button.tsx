@@ -28,7 +28,7 @@ const buttonVariants = cva(
         danger:
           "bg-destructive text-destructive-foreground shadow-lg hover:shadow-xl hover:-translate-y-0.5",
         glass:
-          "bg-white/10 backdrop-blur-md border border-white/20 text-foreground hover:bg-white/20",
+          "bg-white/10 backdrop-blur-md border border-white/20 text-foreground hover:bg-white/20 light:bg-white light:border-slate-200 light:text-slate-900 light:hover:bg-slate-50",
       },
       size: {
         default: "h-11 px-6 py-2",

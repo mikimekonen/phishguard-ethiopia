@@ -11,6 +11,8 @@ node_modules
 dist
 dist-ssr
 *.local
+server/prisma/dev.db
+server/prisma/dev.db-journal
 
 # Editor directories and files
 .vscode/*
