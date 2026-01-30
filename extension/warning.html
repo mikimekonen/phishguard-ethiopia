@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Blocked: Phishing Detected</title>
+    <style>
+      :root {
+        font-family: "Inter", system-ui, sans-serif;
+      }
+      body {
+        margin: 0;
+        background: #0b1120;
+        color: #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 24px;
+      }
+      .card {
+        max-width: 680px;
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid rgba(239, 68, 68, 0.4);
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: 0 20px 40px rgba(2, 6, 23, 0.4);
+      }
+      h1 {
+        margin: 0 0 12px;
+        font-size: 28px;
+      }
+      .muted {
+        color: #94a3b8;
+        font-size: 14px;
+        margin-bottom: 16px;
+      }
+      .details {
+        background: rgba(30, 41, 59, 0.6);
+        border-radius: 12px;
+        padding: 12px;
+        font-size: 14px;
+        word-break: break-all;
+      }
+      .actions {
+        margin-top: 20px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      button {
+        border: none;
+        border-radius: 10px;
+        padding: 10px 16px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .back {
+        background: #22c55e;
+        color: #0f172a;
+      }
+      .proceed {
+        background: transparent;
+        color: #f87171;
+        border: 1px solid #f87171;
+      }
+      @media (prefers-color-scheme: light) {
+        body {
+          background: #f8fafc;
+          color: #0f172a;
+        }
+        .card {
+          background: #ffffff;
+          border-color: rgba(239, 68, 68, 0.4);
+        }
+        .details {
+          background: #f1f5f9;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Phishing site blocked</h1>
+      <p class="muted">For your safety, PhishGuard prevented access to a suspicious site.</p>
+      <div class="details">
+        <div><strong>URL:</strong> <span id="url"></span></div>
+        <div><strong>Confidence:</strong> <span id="confidence"></span></div>
+        <div><strong>Reason:</strong> <span id="reason"></span></div>
+      </div>
+      <div class="actions">
+        <button class="back" id="goBack">Go back</button>
+        <button class="proceed" id="proceed">Proceed anyway</button>
+      </div>
+    </div>
+    <script src="warning.js"></script>
+  </body>
+</html>
