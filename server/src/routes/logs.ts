@@ -255,10 +255,11 @@ adminLogsRouter.get("/stats", async (req, res) => {
     if (cached) {
       return res.json(cached);
     }
-    const [total, phishing, safe] = await Promise.all([
+    const [total, phishing, safe, suspicious] = await Promise.all([
       prisma.detectionLog.count({ where: { softDeleted: false, tenantId } }),
       prisma.detectionLog.count({ where: { result: "phishing", softDeleted: false, tenantId } }),
       prisma.detectionLog.count({ where: { result: "safe", softDeleted: false, tenantId } }),
+      prisma.detectionLog.count({ where: { result: "suspicious", softDeleted: false, tenantId } }),
     ]);
 
     const recent = await prisma.detectionLog.groupBy({
@@ -271,6 +272,7 @@ adminLogsRouter.get("/stats", async (req, res) => {
     const payload = {
       total,
       phishing,
+      suspicious,
       safe,
       recentByType: recent,
     };

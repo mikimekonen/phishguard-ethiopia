@@ -32,6 +32,7 @@ model Tenant {
   createdAt    DateTime      @default(now())
   users        AdminUser[]
   detectionLogs DetectionLog[]
+  malwareScans  MalwareScan[]
   trustedDomains TrustedDomain[]
   reports      CommunityReport[]
   auditLogs    AuditLog[]
@@ -39,6 +40,61 @@ model Tenant {
   evidenceAttachments EvidenceAttachment[]
   exportJobs   ExportJob[]
   caseEvidence  CaseEvidenceAttachment[]
+}
+
+model MalwareScan {
+  id                   String   @id @default(cuid())
+  tenantId             String
+  tenant               Tenant   @relation(fields: [tenantId], references: [id])
+  hashSha256           String
+  fileName             String?
+  fileType             String?
+  source               String?
+  platform             String?
+  verdict              String
+  scanCount            Int      @default(1)
+  malwareFamily        String?
+  malwareType          String?
+  threatLabel          String?
+  threatTagsJson       String?
+  md5                  String?
+  sha1                 String?
+  fileSize             Int?
+  fileTypeDescription  String?
+  entropy              Float?
+  suspiciousStringsJson String?
+  detectionEnginesJson String?
+  detectionTimestamp   DateTime?
+  sandboxSummary       String?
+  networkIoCsJson      String?
+  behaviorDescription  String?
+  impactDescription    String?
+  mitigationSuggestions String?
+  descriptionAm        String?
+  iocsJson             String?
+  staticFeaturesJson   String?
+  dynamicFeaturesJson  String?
+  behaviorSummary      String?
+  confidenceScore      Int
+  maliciousCount       Int?
+  suspiciousCount      Int?
+  harmlessCount        Int?
+  undetectedCount      Int?
+  riskScore            Int?
+  intelProvider        String?
+  targetPlatform       String?
+  deliveryMethod       String?
+  impersonatedInstitution String?
+  firstSeen            DateTime?
+  lastSeen             DateTime?
+  classification       String?
+  behaviorIndicatorsJson String?
+  sourceProvider       String?
+  lastCheckedAt        DateTime?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@unique([tenantId, hashSha256])
 }
 
 model DetectionLog {

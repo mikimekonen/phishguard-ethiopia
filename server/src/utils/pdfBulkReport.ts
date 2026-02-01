@@ -134,9 +134,10 @@ export const buildBulkReportPdf = (params: {
   doc.font(FONT_PATH);
 
   const total = logs.length;
-  const threats = logs.filter((l) => l.result === "phishing").length;
-  const safe = logs.filter((l) => l.result === "safe").length;
+  const phishing = logs.filter((l) => l.result === "phishing").length;
   const suspicious = logs.filter((l) => l.result === "suspicious").length;
+  const threats = phishing;
+  const safe = logs.filter((l) => l.result === "safe").length;
   const detectionRate = total ? ((threats / total) * 100).toFixed(1) : "0";
 
   // Header
@@ -165,7 +166,7 @@ export const buildBulkReportPdf = (params: {
   doc.fontSize(12).fillColor("#0F172A").text(total.toString(), 50, row1Y + 24);
 
   drawCard(doc, 40 + cardWidth + cardGap, row1Y, cardWidth, cardHeight);
-  doc.fontSize(8).fillColor("#64748B").text("Threats Detected", 50 + cardWidth + cardGap, row1Y + 8);
+  doc.fontSize(8).fillColor("#64748B").text("Threats Detected (Phishing)", 50 + cardWidth + cardGap, row1Y + 8);
   doc.fontSize(12).fillColor("#DC2626").text(threats.toString(), 50 + cardWidth + cardGap, row1Y + 24);
 
   drawCard(doc, 40 + (cardWidth + cardGap) * 2, row1Y, cardWidth, cardHeight);

@@ -3,20 +3,23 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { DetectionForm } from "@/components/detection/DetectionForm";
 import { DetectionResult, DetectionResultData } from "@/components/detection/DetectionResult";
+import { MalwareResult, MalwareResultData } from "@/components/detection/MalwareResult";
 import { PatternAlerts } from "@/components/detection/PatternAlerts";
 import { analyzeContent } from "@/lib/phishingDetector";
-import { detectContent, logDetection, submitReport } from "@/lib/api";
+import { detectContent, logDetection, submitReport, scanMalwareFile } from "@/lib/api";
 import { Shield, AlertTriangle, Brain, Layers } from "lucide-react";
 
 const Detect = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<DetectionResultData | null>(null);
+  const [malwareResult, setMalwareResult] = useState<MalwareResultData | null>(null);
   const [reportStatus, setReportStatus] = useState<string | null>(null);
 
   const handleDetection = async (type: "url" | "sms" | "email", content: string) => {
     setIsLoading(true);
     setResult(null);
     setReportStatus(null);
+    setMalwareResult(null);
     
     try {
       try {
@@ -89,7 +92,44 @@ const Detect = () => {
 
   const handleReset = () => {
     setResult(null);
+    setMalwareResult(null);
     setReportStatus(null);
+  };
+
+  const handleFileScan = async (file: File, meta?: { deliveryMethod?: string; impersonatedInstitution?: string }) => {
+    setIsLoading(true);
+    setResult(null);
+    setMalwareResult(null);
+    setReportStatus(null);
+    try {
+      const response = await scanMalwareFile(file, meta);
+      setMalwareResult({
+        verdict: response.verdict,
+        verdictLabel: response.verdictLabel,
+        verdictLabelAm: response.verdictLabelAm,
+        confidenceBand: response.confidenceBand,
+        confidence: response.confidence,
+        malwareFamily: response.malwareFamily,
+        behaviorSummary: response.behaviorSummary,
+        warning: response.warning,
+        sourceLabel: response.sourceLabel,
+      });
+    } catch (error) {
+      console.error("Malware scan error:", error);
+      setMalwareResult({
+        verdict: "SUSPICIOUS",
+        verdictLabel: "Suspicious",
+        verdictLabelAm: "ጥርጣሬ ያለ",
+        confidenceBand: "suspicious",
+        confidence: 0,
+        behaviorSummary: "External Malware Intelligence Result unavailable. Please try again later.",
+        warning: "External Malware Intelligence Result unavailable. Please try again later.",
+        warningAm: "የውጭ የማልዌር መረጃ አገልግሎት አልተገኘም። በኋላ ደግሞ ይሞክሩ።",
+        sourceLabel: "Malware intelligence unavailable",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleReport = async () => {
@@ -154,13 +194,14 @@ const Detect = () => {
 
             {/* Main Card */}
             <div className="p-6 md:p-8 rounded-2xl border border-border bg-card/50 backdrop-blur-sm shadow-card">
-              {result ? (
+              {result || malwareResult ? (
                 <div className="space-y-4">
-                  <DetectionResult result={result} onReset={handleReset} onReport={handleReport} />
+                  {result && <DetectionResult result={result} onReset={handleReset} onReport={handleReport} />}
+                  {malwareResult && <MalwareResult result={malwareResult} onReset={handleReset} />}
                   {reportStatus && <p className="text-sm text-secondary">{reportStatus}</p>}
                 </div>
               ) : (
-                <DetectionForm onSubmit={handleDetection} isLoading={isLoading} />
+                <DetectionForm onSubmit={handleDetection} onFileSubmit={handleFileScan} isLoading={isLoading} />
               )}
             </div>
             {/* Warning Banner */}

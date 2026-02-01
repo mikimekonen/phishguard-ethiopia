@@ -16,6 +16,7 @@ import { casesRouter } from "./routes/cases";
 import { evidenceRouter } from "./routes/evidence";
 import { downloadsRouter } from "./routes/downloads";
 import { metricsRouter } from "./routes/metrics";
+import { malwareRouter, adminMalwareRouter } from "./routes/malware";
 import { recordRequest } from "./utils/metrics";
 
 const allowedOrigins =
@@ -57,9 +58,11 @@ app.use(downloadsRouter);
 
 app.use(authRouter);
 app.use("/api/detect", publicLimiter);
+app.use("/api/malware", publicLimiter);
 app.use("/logs", publicLimiter);
 app.use("/reports", publicLimiter);
 app.use(detectRouter);
+app.use(malwareRouter);
 app.use(publicLogsRouter);
 app.use(publicReportsRouter);
 
@@ -70,6 +73,8 @@ app.use("/admin", exportsRouter);
 app.use("/admin", casesRouter);
 app.use("/admin", evidenceRouter);
 app.use("/admin", metricsRouter);
+app.use("/admin", adminMalwareRouter);
+app.use("/api/admin", adminMalwareRouter);
 
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   if (err instanceof multer.MulterError) {

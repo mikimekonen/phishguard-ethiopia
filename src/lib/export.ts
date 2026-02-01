@@ -116,7 +116,7 @@ export const exportAllScansPdf = async (params: {
   logs: DetectionLog[];
   adminEmail?: string | null;
   logoUrl: string;
-  stats: { total: number; phishing: number; safe: number };
+  stats: { total: number; phishing: number; suspicious: number; safe: number };
 }) => {
   const { logs, adminEmail, logoUrl, stats } = params;
   const doc = new jsPDF();
@@ -150,12 +150,13 @@ export const exportAllScansPdf = async (params: {
     columnStyles: { 0: { cellWidth: 35 }, 1: { cellWidth: 140 } },
   });
 
-  const detectionRate = stats.total ? `${((stats.phishing / stats.total) * 100).toFixed(1)}%` : "0%";
+  const threatsDetected = stats.phishing || 0;
+  const detectionRate = stats.total ? `${((threatsDetected / stats.total) * 100).toFixed(1)}%` : "0%";
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
   const statsY = (doc as any).lastAutoTable?.finalY ? (doc as any).lastAutoTable.finalY + 6 : 52;
   doc.text(`Total scans: ${stats.total}`, 14, statsY);
-  doc.text(`Threats detected: ${stats.phishing}`, 70, statsY);
+  doc.text(`Threats detected: ${threatsDetected}`, 70, statsY);
   doc.text(`Detection rate: ${detectionRate}`, 140, statsY);
   doc.setFont("helvetica", "normal");
   doc.setDrawColor(220);

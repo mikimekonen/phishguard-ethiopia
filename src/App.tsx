@@ -12,6 +12,8 @@ import AdminLogin from "./pages/AdminLogin";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import Education from "./pages/Education";
 import Cases from "./pages/Cases";
+import MalwareScans from "./pages/MalwareScans";
+import MalwareStatistics from "./pages/MalwareStatistics";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +30,8 @@ const App = () => (
           <Route element={<RequireAuth />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/cases" element={<Cases />} />
+            <Route path="/admin/malware-scans" element={<MalwareScans />} />
+            <Route path="/admin/malware-statistics" element={<MalwareStatistics />} />
           </Route>
           <Route path="/about" element={<About />} />
           <Route path="/learn" element={<Education />} />

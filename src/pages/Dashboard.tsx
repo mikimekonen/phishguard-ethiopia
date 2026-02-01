@@ -5,6 +5,7 @@ import {
   BarChart3,
   ShieldAlert,
   ShieldCheck,
+  ShieldQuestion,
   TrendingUp,
   Link2,
   MessageSquare,
@@ -46,7 +47,10 @@ import {
   uploadEvidence,
   fetchEvidence,
   downloadEvidence,
+  fetchMalwareStats,
 } from "@/lib/api";
+import type { MalwareStatsPayload } from "@/lib/api";
+import { MalwareStats } from "@/components/MalwareStats";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { CSVLink } from "react-csv";
@@ -57,11 +61,12 @@ type StatCard = { label: string; labelAm: string; value: string; icon: any; colo
 const Dashboard = () => {
   const { token, clear } = useAuth();
   const navigate = useNavigate();
-  const [stats, setStats] = useState<{ total: number; phishing: number; safe: number; recentByType: any[] } | null>(null);
+  const [stats, setStats] = useState<{ total: number; phishing: number; suspicious: number; safe: number; recentByType: any[] } | null>(null);
   const [logs, setLogs] = useState<DetectionLog[]>([]);
   const [domains, setDomains] = useState<any[]>([]);
   const [cases, setCases] = useState<any[]>([]);
   const [analytics, setAnalytics] = useState<any | null>(null);
+  const [malwareStats, setMalwareStats] = useState<MalwareStatsPayload | null>(null);
   const [newDomain, setNewDomain] = useState("");
   const [editingDomainId, setEditingDomainId] = useState<string | null>(null);
   const [editingDomainValue, setEditingDomainValue] = useState("");
@@ -112,6 +117,13 @@ const Dashboard = () => {
       setDomains(domainsRes.data || []);
       setCases(casesRes.data || []);
       try {
+        const malwareStatsRes = await fetchMalwareStats(token);
+        setMalwareStats(malwareStatsRes);
+      } catch (malwareErr: any) {
+        setMalwareStats(null);
+        console.warn("Malware stats fetch failed", malwareErr);
+      }
+      try {
         const analyticsRes = await fetchAnalytics(token);
         setAnalytics(analyticsRes);
       } catch (analyticsErr: any) {
@@ -144,6 +156,7 @@ const Dashboard = () => {
   const statCards: StatCard[] = useMemo(() => {
     const total = stats?.total ?? 0;
     const phishing = stats?.phishing ?? 0;
+    const suspicious = stats?.suspicious ?? 0;
     const safe = stats?.safe ?? 0;
     const detectionRate = total ? `${((phishing / total) * 100).toFixed(1)}%` : "0%";
     return [
@@ -156,12 +169,20 @@ const Dashboard = () => {
         bgColor: "bg-primary/10",
       },
       {
-        label: "Threats Detected",
-        labelAm: "የተገኙ ስጋቶች",
+        label: "Threats Detected (Phishing)",
+        labelAm: "የተገኙ ስጋቶች (ፊሺንግ)",
         value: phishing.toLocaleString(),
         icon: ShieldAlert,
         color: "text-destructive",
         bgColor: "bg-destructive/10",
+      },
+      {
+        label: "Suspicious",
+        labelAm: "ተጠርጣሪ",
+        value: suspicious.toLocaleString(),
+        icon: ShieldQuestion,
+        color: "text-warning",
+        bgColor: "bg-warning/10",
       },
       {
         label: "Safe Content",
@@ -499,185 +520,41 @@ const Dashboard = () => {
               { label: "exported_by", key: "exported_by" },
               { label: "export_scope", key: "export_scope" },
             ]}
-            filename={`phishguard-scans-${Date.now()}.csv`}
-            ref={csvLinkRef}
+            filename={`phishguard-detections-${Date.now()}.csv`}
             className="hidden"
+            ref={csvLinkRef}
           />
 
-          {error && (
-            <div className="mb-4 p-3 rounded-lg border border-destructive/30 bg-destructive/5 text-destructive text-sm">
-              {error}
-            </div>
-          )}
-
-          <Card className="mb-6 bg-card/50 backdrop-blur-sm border-border">
-            <CardHeader>
-              <CardTitle className="text-lg">Detection Filters</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm text-muted-foreground">Content Type</label>
-                  <select
-                    value={filters.inputType}
-                    onChange={(e) => setFilters((prev) => ({ ...prev, inputType: e.target.value }))}
-                    className="w-full rounded-md border border-border bg-muted/50 px-3 py-2 text-sm"
-                  >
-                    <option value="">All</option>
-                    <option value="url">URL</option>
-                    <option value="sms">SMS</option>
-                    <option value="email">Email</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm text-muted-foreground">Risk Level</label>
-                  <select
-                    value={filters.riskLevel}
-                    onChange={(e) => setFilters((prev) => ({ ...prev, riskLevel: e.target.value }))}
-                    className="w-full rounded-md border border-border bg-muted/50 px-3 py-2 text-sm"
-                  >
-                    <option value="">All</option>
-                    <option value="high">High</option>
-                    <option value="medium">Medium</option>
-                    <option value="low">Low</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm text-muted-foreground">Targeted Institution</label>
-                  <select
-                    value={filters.institution}
-                    onChange={(e) => setFilters((prev) => ({ ...prev, institution: e.target.value }))}
-                    className="w-full rounded-md border border-border bg-muted/50 px-3 py-2 text-sm"
-                  >
-                    <option value="">All</option>
-                    <option value="Telebirr">Telebirr</option>
-                    <option value="CBE">CBE</option>
-                    <option value="Dashen">Dashen</option>
-                    <option value="Awash">Awash</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm text-muted-foreground">Status</label>
-                  <select
-                    value={filters.status}
-                    onChange={(e) => setFilters((prev) => ({ ...prev, status: e.target.value }))}
-                    className="w-full rounded-md border border-border bg-muted/50 px-3 py-2 text-sm"
-                  >
-                    <option value="">All</option>
-                    <option value="pending">Pending</option>
-                    <option value="confirmed_phishing">Confirmed Phishing</option>
-                    <option value="false_positive">False Positive</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm text-muted-foreground">From</label>
-                  <Input
-                    type="date"
-                    value={filters.from}
-                    onChange={(e) => setFilters((prev) => ({ ...prev, from: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm text-muted-foreground">To</label>
-                  <Input
-                    type="date"
-                    value={filters.to}
-                    onChange={(e) => setFilters((prev) => ({ ...prev, to: e.target.value }))}
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    id="showDeleted"
-                    type="checkbox"
-                    checked={filters.includeDeleted}
-                    onChange={(e) => setFilters((prev) => ({ ...prev, includeDeleted: e.target.checked }))}
-                  />
-                  <label htmlFor="showDeleted" className="text-sm text-muted-foreground">
-                    Show deleted
-                  </label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={handleApplyFilters}>
-                    Apply Filters
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={handleClearFilters}>
-                    Clear
-                  </Button>
-                </div>
+          <div className="space-y-6">
+            <section className="space-y-3">
+              <div>
+                <h2 className="text-xl font-semibold">Phishing Statistics</h2>
+                <p className="text-sm text-muted-foreground">Overview of phishing scan activity and outcomes</p>
               </div>
-            </CardContent>
-          </Card>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                {statCards.map((card) => {
+                  const Icon = card.icon;
+                  return (
+                    <Card key={card.label} className="bg-card/50 backdrop-blur-sm border-border">
+                      <CardContent className="p-5 flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground">{card.label}</p>
+                          <p className="text-xs text-muted-foreground">{card.labelAm}</p>
+                          <p className="text-2xl font-semibold mt-1">{card.value}</p>
+                        </div>
+                        <div className={`p-3 rounded-xl ${card.bgColor}`}>
+                          <Icon className={`h-5 w-5 ${card.color}`} />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </section>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            {statCards.map((stat) => (
-              <Card key={stat.label} className="bg-card/50 backdrop-blur-sm border-border">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">{stat.label}</p>
-                      <p className="text-xs text-secondary">{stat.labelAm}</p>
-                      <p className="text-3xl font-bold mt-2">{stat.value}</p>
-                    </div>
-                    <div className={`p-3 rounded-xl ${stat.bgColor}`}>
-                      <stat.icon className={`h-6 w-6 ${stat.color}`} />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <Card className="bg-card/50 backdrop-blur-sm border-border">
-              <CardHeader>
-                <CardTitle className="text-lg">Most Targeted Bank</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-semibold">
-                  {analytics?.mostTargeted || "N/A"}
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {analytics?.mostTargetedCount || 0} detections
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-card/50 backdrop-blur-sm border-border">
-              <CardHeader>
-                <CardTitle className="text-lg">Most Common Attack</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-semibold">
-                  {analytics?.mostCommonAttack || "N/A"}
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {analytics?.mostCommonAttackCount || 0} detections
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-card/50 backdrop-blur-sm border-border">
-              <CardHeader>
-                <CardTitle className="text-lg">Daily Scan Counts</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {Object.entries(analytics?.dailyCounts || {})
-                  .sort(([a], [b]) => (a > b ? 1 : -1))
-                  .slice(-7)
-                  .map(([day, count]) => (
-                    <div key={day} className="flex items-center gap-3">
-                      <span className="text-xs text-muted-foreground w-20">{day}</span>
-                      <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                        <div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, count * 10)}%` }} />
-                      </div>
-                      <span className="text-xs text-muted-foreground w-8 text-right">{count}</span>
-                    </div>
-                  ))}
-                {!Object.keys(analytics?.dailyCounts || {}).length && (
-                  <p className="text-sm text-muted-foreground">No analytics yet.</p>
-                )}
-              </CardContent>
-            </Card>
+            <section className="grid grid-cols-1 gap-6">
+              <MalwareStats data={malwareStats} />
+            </section>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

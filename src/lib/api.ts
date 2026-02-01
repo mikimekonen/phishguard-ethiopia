@@ -61,6 +61,74 @@ export type DetectResponse = {
   };
 };
 
+export type MalwareScanResponse = {
+  verdict: "CLEAN" | "SUSPICIOUS" | "MALICIOUS" | "UNKNOWN";
+  verdictLabel: string;
+  verdictLabelAm?: string;
+  confidenceBand?: "safe" | "suspicious" | "malware";
+  confidence: number;
+  malwareFamily?: string;
+  behaviorSummary?: string;
+  warning?: string;
+  sourceLabel?: string;
+};
+
+export type MalwareScanAdmin = {
+  id: string;
+  hashSha256: string;
+  verdict: string;
+  malwareFamily?: string | null;
+  behaviorSummary?: string | null;
+  confidenceScore: number;
+  targetPlatform?: string | null;
+  deliveryMethod?: string | null;
+  impersonatedInstitution?: string | null;
+  firstSeen?: string | null;
+  lastSeen?: string | null;
+  classification?: string | null;
+  behaviorIndicators?: string[];
+  sourceProvider?: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type MalwareScanRow = {
+  id: string;
+  fileName?: string | null;
+  fileHash: string;
+  verdict: "CLEAN" | "SUSPICIOUS" | "MALICIOUS" | "UNKNOWN";
+  malwareFamily?: string | null;
+  malwareType?: string | null;
+  threatLabel?: string | null;
+  threatTags?: string[];
+  md5?: string | null;
+  sha1?: string | null;
+  fileSize?: number | null;
+  fileTypeDescription?: string | null;
+  entropy?: number | null;
+  suspiciousStrings?: string[];
+  detectionEngines?: Array<{ engine: string; category: string; result: string | null }>;
+  detectionTimestamp?: string | null;
+  behaviorDescription?: string | null;
+  impactDescription?: string | null;
+  mitigationSuggestions?: string | null;
+  descriptionAm?: string | null;
+  iocs?: Record<string, unknown> | null;
+  staticFeatures?: Record<string, unknown> | null;
+  dynamicFeatures?: Record<string, unknown> | null;
+  confidenceScore: number;
+  riskScore?: number | null;
+  maliciousCount?: number | null;
+  suspiciousCount?: number | null;
+  harmlessCount?: number | null;
+  platform: "windows" | "android" | "pdf" | "archive" | "unknown";
+  fileType?: string | null;
+  source: "upload" | "email" | "url" | string;
+  intelProvider?: string | null;
+  scannedAt?: string;
+  createdAt: string;
+};
+
 export type DetectionLog = {
   id: string;
   inputType: "url" | "sms" | "email";
@@ -142,6 +210,18 @@ export async function detectContent(type: "url" | "sms" | "email", content: stri
   return handleJson<DetectResponse>(res);
 }
 
+export async function scanMalwareFile(file: File, meta?: { deliveryMethod?: string; impersonatedInstitution?: string }) {
+  const formData = new FormData();
+  formData.append("file", file);
+  if (meta?.deliveryMethod) formData.append("deliveryMethod", meta.deliveryMethod);
+  if (meta?.impersonatedInstitution) formData.append("impersonatedInstitution", meta.impersonatedInstitution);
+  const res = await fetch(`${API_URL}/api/malware/scan`, {
+    method: "POST",
+    body: formData,
+  });
+  return handleJson<MalwareScanResponse>(res);
+}
+
 export async function loginAdmin(email: string, password: string) {
   const res = await fetch(`${API_URL}/auth/login`, {
     method: "POST",
@@ -203,7 +283,91 @@ export async function fetchAllLogs(token: string, params?: {
 
 export async function fetchStats(token: string) {
   const res = await fetch(`${ADMIN_API_URL}/stats`, { headers: { ...authHeaders(token) } });
-  return handleJson<{ total: number; phishing: number; safe: number; recentByType: any[] }>(res);
+  return handleJson<{ total: number; phishing: number; suspicious: number; safe: number; recentByType: any[] }>(res);
+}
+
+export async function fetchMalwareStats(token: string) {
+  const res = await fetch(`${ADMIN_API_URL}/malware/stats?refresh=1`, { headers: { ...authHeaders(token) } });
+  return handleJson<MalwareStatsPayload>(res);
+}
+
+export type MalwareStatsPayload = {
+  total: number;
+  verdicts: {
+    CLEAN: number;
+    SUSPICIOUS: number;
+    MALICIOUS: number;
+    UNKNOWN: number;
+  };
+  averageRiskScore: number;
+  highRiskScans: number;
+  intelProviders: Array<{ provider: string; count: number }>;
+  topFamilies: Array<{ name: string; count: number }>;
+  topTypes: Array<{ name: string; count: number }>;
+  topThreatLabels: Array<{ name: string; count: number }>;
+  trends: {
+    daily: Array<{ date: string; counts: { CLEAN: number; SUSPICIOUS: number; MALICIOUS: number; UNKNOWN: number } }>;
+    weekly: Array<{ weekStart: string; counts: { CLEAN: number; SUSPICIOUS: number; MALICIOUS: number; UNKNOWN: number } }>;
+  };
+  lastUpdated: string;
+};
+
+export async function fetchMalwareScans(token: string) {
+  const res = await fetch(`${ADMIN_API_URL}/malware/scans`, { headers: { ...authHeaders(token) } });
+  return handleJson<{ data: MalwareScanAdmin[] }>(res);
+}
+
+export async function fetchAdminMalwareScans(token: string, params?: {
+  page?: number;
+  limit?: number;
+  verdict?: "CLEAN" | "SUSPICIOUS" | "MALICIOUS" | "UNKNOWN";
+  platform?: "windows" | "android" | "pdf" | "archive" | "unknown";
+  from?: string;
+  to?: string;
+}) {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.limit) qs.set("limit", String(params.limit));
+  if (params?.verdict) qs.set("verdict", params.verdict);
+  if (params?.platform) qs.set("platform", params.platform);
+  if (params?.from) qs.set("from", params.from);
+  if (params?.to) qs.set("to", params.to);
+  const res = await fetch(`${API_URL}/api/admin/malware-scans?${qs.toString()}`, {
+    headers: { ...authHeaders(token) },
+  });
+  return handleJson<{ total: number; rows: MalwareScanRow[] }>(res);
+}
+
+export async function rescanMalwareScan(token: string, scanId: string) {
+  const res = await fetch(`${API_URL}/api/admin/malware/${scanId}/rescan`, {
+    method: "POST",
+    headers: { ...authHeaders(token) },
+  });
+  return handleJson<{
+    ok: boolean;
+    message: string;
+    verdict?: MalwareScanRow["verdict"];
+    riskScore?: number;
+    changed?: boolean;
+  }>(res);
+}
+
+export async function downloadMalwareExportCsv(token: string) {
+  const res = await fetch(`${ADMIN_API_URL}/malware/exports/csv`, { headers: { ...authHeaders(token) } });
+  if (!res.ok) throw new Error(`Export failed with ${res.status}`);
+  return res.blob();
+}
+
+export async function downloadMalwareExportPdf(token: string) {
+  const res = await fetch(`${ADMIN_API_URL}/malware/exports/pdf`, { headers: { ...authHeaders(token) } });
+  if (!res.ok) throw new Error(`Export failed with ${res.status}`);
+  return res.blob();
+}
+
+export async function downloadMalwareScanPdf(token: string, scanId: string) {
+  const res = await fetch(`${ADMIN_API_URL}/malware/exports/${scanId}/pdf`, { headers: { ...authHeaders(token) } });
+  if (!res.ok) throw new Error(`Export failed with ${res.status}`);
+  return res.blob();
 }
 
 export async function fetchTrustedDomains(token: string) {
