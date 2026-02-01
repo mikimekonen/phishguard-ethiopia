@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { prisma } from "../prisma";
-import { buildBulkReportPdf } from "./pdfBulkReport";
+import { buildBulkReportPdf, type BulkScanLog } from "./pdfBulkReport";
 import { buildCsv } from "./exportCsv";
 import { appendAuditLog, computeExportHash, computeExportSignature } from "./audit";
 
@@ -49,10 +49,23 @@ export const startExportWorker = () => {
       const params = JSON.parse(job.paramsJson) as ExportJobParams;
       const filters = buildFilters(params.filters, job.tenantId);
       const logs = await prisma.detectionLog.findMany({ where: filters, orderBy: { createdAt: "desc" }, take: 1000 });
+      const bulkLogs: BulkScanLog[] = logs.map((log) => ({
+        id: log.id,
+        inputType: log.inputType as "url" | "sms" | "email",
+        result: log.result as "safe" | "suspicious" | "phishing",
+        confidence: log.confidence,
+        riskScore: log.riskScore,
+        riskLevel: log.riskLevel as "low" | "medium" | "high" | null,
+        contentPreview: log.contentPreview,
+        createdAt: log.createdAt,
+        institution: log.institution,
+        summary: log.summary,
+        summaryAm: log.summaryAm,
+      }));
 
       let resultPath = "";
       if (job.type === "bulk_pdf") {
-        const doc = buildBulkReportPdf({ logs, generatedAt: new Date() });
+        const doc = buildBulkReportPdf({ logs: bulkLogs, generatedAt: new Date() });
         resultPath = path.join(exportDir, `${job.id}.pdf`);
         const stream = fs.createWriteStream(resultPath);
         doc.pipe(stream);
